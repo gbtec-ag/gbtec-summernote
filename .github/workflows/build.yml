@@ -10,6 +10,8 @@ jobs:
   build-project:
     name: gbtec-summernote
     runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '16'
 
     # skip pushes initiated by dependabot and skip PR synchronizations not initiated by dependabot
     if: ${{ ( ( github.event_name == 'pull_request_target' ) && contains(github.head_ref, 'dependabot') ) ||
@@ -46,21 +48,21 @@ jobs:
             echo "::set-output name=actual_branch::${CURRENT_BRANCH_NAME}"
           fi
 
-      - name: Set up Node 16
+      - name: Set up node 16
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
           registry-url: ${{ secrets.JFROG_NPM_FETCH_URL }}
 
-      - name: Install Node dependencies
+      - name: Install node dependencies
         # run install without scripts, because they could access NODE_AUTH_TOKEN
         env:
           NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
         run: npm install --ignore-scripts --no-fund
 
         # this step is separated from npm install for security reasons - here we can execute scripts
-      - name: Post-install Node dependencies
+      - name: Post-install node dependencies
         run: npm rebuild && npm run prepare --if-present
 
       - name: Lint
@@ -69,11 +71,17 @@ jobs:
       - name: Test
         run: npm run test
 
-      - name: Build
+      - name: Build package
         run: npm run build
 
-      - name: Publish
+      - name: Set up node for publishing
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: ${{ secrets.JFROG_NPM_PUBLISH_URL }}
+
+      - name: Publish package
         if: steps.actual-branch.outputs.actual_branch == 'main'
-        run: npm publish dist --registry=${{ secrets.JFROG_NPM_PUBLISH_URL }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        run: npm publish
