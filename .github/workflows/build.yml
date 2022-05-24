@@ -1,0 +1,88 @@
+name: gbtec-summernote
+
+on:
+  push:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  build-project:
+    name: gbtec-summernote
+    runs-on: ubuntu-latest
+    env:
+      NODE_VERSION: '16'
+
+    # skip pushes initiated by dependabot and skip PR synchronizations not initiated by dependabot
+    if: ${{ ( ( github.event_name == 'pull_request_target' ) && contains(github.head_ref, 'dependabot') ) ||
+      ( github.event_name == 'push' && !contains(github.ref, 'dependabot') ) }}
+
+    steps:
+      - name: Get Ubuntu Security Updates
+        run: |
+          grep security /etc/apt/sources.list > /tmp/security.list
+          sudo apt-get upgrade -oDir::Etc::Sourcelist=/tmp/security.list -s
+
+      - name: Git Checkout
+        uses: actions/checkout@v3
+
+      # pull_request_target always runs in target branch of the PR
+      - name: Switch branch to PR
+        if: github.event_name == 'pull_request_target'
+        run: git checkout ${{ github.head_ref }}
+
+      - name: Get branch name
+        id: branch-name
+        uses: tj-actions/branch-names@v5
+
+      # Get the branch we want to build, in case of PR the name should be the source
+      - name: Get actual branch name
+        env:
+          ACTUAL_BRANCH_NAME: ${{ steps.branch-name.outputs.head_ref_branch }}
+          CURRENT_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
+        id: actual-branch
+        run: |
+          if [[ ${{github.event_name}} == 'pull_request_target' ]]; then
+            echo "::set-output name=actual_branch::${ACTUAL_BRANCH_NAME}"
+          else
+            echo "::set-output name=actual_branch::${CURRENT_BRANCH_NAME}"
+          fi
+
+      - name: Set up node 16
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          registry-url: ${{ secrets.JFROG_NPM_FETCH_URL }}
+
+      - name: Install node dependencies
+        # run install without scripts, because they could access NODE_AUTH_TOKEN
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        run: npm install --ignore-scripts --no-fund
+
+        # this step is separated from npm install for security reasons - here we can execute scripts
+      - name: Post-install node dependencies
+        run: npm rebuild && npm run prepare --if-present
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm run test
+
+      - name: Build package
+        run: npm run build
+
+      - name: Set up node for publishing
+        if: steps.actual-branch.outputs.actual_branch == 'main'
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: ${{ secrets.JFROG_NPM_PUBLISH_URL }}
+
+      - name: Publish package
+        if: steps.actual-branch.outputs.actual_branch == 'main'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
+        run: npm publish
