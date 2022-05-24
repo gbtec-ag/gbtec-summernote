@@ -1,7 +1,7 @@
 {
-  "name": "@gbtec/gbtec-summernote",
+  "name": "summernote",
   "description": "Super simple WYSIWYG editor",
-  "version": "1.0.0",
+  "version": "0.8.20-gbtec.0",
   "license": "MIT",
   "keywords": [
     "editor",
