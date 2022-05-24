@@ -1,5 +1,5 @@
 {
-  "name": "gbtec-summernote",
+  "name": "@gbtec/gbtec-summernote",
   "description": "Super simple WYSIWYG editor",
   "version": "1.0.0",
   "license": "MIT",
