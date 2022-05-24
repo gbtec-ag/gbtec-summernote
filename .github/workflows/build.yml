@@ -54,10 +54,14 @@ jobs:
           registry-url: ${{ secrets.JFROG_NPM_FETCH_URL }}
 
       - name: Install Node dependencies
-        # scripts could access NODE_AUTH_TOKEN
+        # run install without scripts, because they could access NODE_AUTH_TOKEN
         env:
           NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
         run: npm install --ignore-scripts --no-fund
+
+        # this step is separated from npm install for security reasons - here we can execute scripts
+      - name: Post-install Node dependencies
+        run: npm rebuild && npm run prepare --if-present
 
       - name: Lint
         run: npm run lint
