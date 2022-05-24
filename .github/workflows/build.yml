@@ -75,6 +75,7 @@ jobs:
         run: npm run build
 
       - name: Set up node for publishing
+        if: steps.actual-branch.outputs.actual_branch == 'main'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
