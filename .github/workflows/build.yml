@@ -1,4 +1,4 @@
-name: gbtec-summernote
+name: summernote
 
 on:
   push:
@@ -8,21 +8,16 @@ on:
 
 jobs:
   build-project:
-    name: gbtec-summernote
+    name: summernote
     runs-on: ubuntu-latest
     env:
-      NODE_VERSION: '16'
+      NODE_VERSION: 14
 
-    # skip pushes initiated by dependabot and skip PR synchronizations not initiated by dependabot
-    if: ${{ ( ( github.event_name == 'pull_request_target' ) && contains(github.head_ref, 'dependabot') ) ||
-      ( github.event_name == 'push' && !contains(github.ref, 'dependabot') ) }}
+    # Skip pull_request_target events for normal users and pushes for dependabot
+    if: ${{ (github.event_name == 'push' && github.actor != 'dependabot[bot]') ||
+      (github.event_name == 'pull_request_target' && github.actor == 'dependabot[bot]') }}
 
     steps:
-      - name: Get Ubuntu Security Updates
-        run: |
-          grep security /etc/apt/sources.list > /tmp/security.list
-          sudo apt-get upgrade -oDir::Etc::Sourcelist=/tmp/security.list -s
-
       - name: Git Checkout
         uses: actions/checkout@v3
 
@@ -31,37 +26,42 @@ jobs:
         if: github.event_name == 'pull_request_target'
         run: git checkout ${{ github.head_ref }}
 
+      # a push initiated by dependabot doesn't yield enough rights to successfully build.
+      # Due to that, we're using pull_request_target events for that.
+      # Since these are running in the target of a PR, we need to manually switch back to the source (feat/fix branch)
       - name: Get branch name
         id: branch-name
         uses: tj-actions/branch-names@v5
 
-      # Get the branch we want to build, in case of PR the name should be the source
+        # Get the branch we want to build. In case of a PR we want the source branch.
+        # This is necessary to see on which branch we are after step "Switch branch to PR". Otherwise, we'd
+        # look at the branch the event yields, which could lead to building a fix/feat state into the development image
       - name: Get actual branch name
+        id: actual-branch-name
         env:
-          ACTUAL_BRANCH_NAME: ${{ steps.branch-name.outputs.head_ref_branch }}
-          CURRENT_BRANCH_NAME: ${{ steps.branch-name.outputs.current_branch }}
-        id: actual-branch
+          ACTUAL_BRANCH: ${{ steps.branch-name.outputs.head_ref_branch }}
+          CURRENT_BRANCH: ${{ steps.branch-name.outputs.current_branch }}
         run: |
           if [[ ${{github.event_name}} == 'pull_request_target' ]]; then
-            echo "::set-output name=actual_branch::${ACTUAL_BRANCH_NAME}"
+            echo "::set-output name=actual_branch::${ACTUAL_BRANCH}"
           else
-            echo "::set-output name=actual_branch::${CURRENT_BRANCH_NAME}"
+            echo "::set-output name=actual_branch::${CURRENT_BRANCH}"
           fi
 
-      - name: Set up node 16
+      - name: Set up node
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          registry-url: ${{ secrets.JFROG_NPM_FETCH_URL }}
+          cache: npm
+          registry-url: ${{ secrets.REGISTRY_FETCH_URL }}
 
+        # Run install without scripts, because they could access NODE_AUTH_TOKEN
       - name: Install node dependencies
-        # run install without scripts, because they could access NODE_AUTH_TOKEN
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
-        run: npm install --ignore-scripts --no-fund
+          NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: npm ci --ignore-scripts
 
-        # this step is separated from npm install for security reasons - here we can execute scripts
+        # This step is separated from npm install for security reasons - here we can execute scripts
       - name: Post-install node dependencies
         run: npm rebuild && npm run prepare --if-present
 
@@ -75,14 +75,47 @@ jobs:
         run: npm run build
 
       - name: Set up node for publishing
-        if: steps.actual-branch.outputs.actual_branch == 'main'
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          registry-url: ${{ secrets.JFROG_NPM_PUBLISH_URL }}
+          cache: npm
+          registry-url: ${{ secrets.REGISTRY_PUBLISH_URL }}
+
+      - name: Get package info
+        if: steps.actual-branch.outputs.actual_branch != 'main'
+        uses: codex-team/action-nodejs-package-info@v1
+        id: package-info
+
+      - name: Sanitize branch name
+        uses: mad9000/actions-find-and-replace-string@2
+        if: steps.actual-branch.outputs.actual_branch != 'main' && steps.actual-branch.outputs.actual_branch != 'develop'
+        id: sanitized-branch-name
+        with:
+          source: ${{steps.actual-branch-name.outputs.actual_branch}}
+          find: '/'
+          replace: '-'
+
+      - name: Add branch name to package version for feature branches
+        if: steps.actual-branch.outputs.actual_branch != 'main' && steps.actual-branch.outputs.actual_branch != 'develop'
+        uses: reedyuk/npm-version@1.1.1
+        with:
+          version: ${{ steps.package-info.outputs.version}}-${{steps.sanitized-branch-name.outputs.value}}
+
+      - name: Remove existing feature snapshot package
+        if: steps.actual-branch.outputs.actual_branch != 'main' && steps.actual-branch.outputs.actual_branch != 'develop'
+        continue-on-error: true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: npm unpublish --force ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version}}-${{steps.sanitized-branch-name.outputs.value}}
+
+      - name: Remove existing develop snapshot package
+        if: steps.actual-branch.outputs.actual_branch == 'develop'
+        continue-on-error: true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
+        run: npm unpublish --force ${{ steps.package-info.outputs.name }}@${{ steps.package-info.outputs.version }}
 
       - name: Publish package
-        if: steps.actual-branch.outputs.actual_branch == 'main'
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.JFROG_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
         run: npm publish
