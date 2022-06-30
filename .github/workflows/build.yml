@@ -26,7 +26,7 @@ jobs:
         if: github.event_name == 'pull_request_target'
         run: git checkout ${{ github.head_ref }}
 
-      # a push initiated by dependabot doesn't yield enough rights to successfully build.
+      # A push initiated by dependabot doesn't yield enough rights to successfully build.
       # Due to that, we're using pull_request_target events for that.
       # Since these are running in the target of a PR, we need to manually switch back to the source (feat/fix branch)
       - name: Get branch name
