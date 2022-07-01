@@ -59,7 +59,7 @@ jobs:
       - name: Install node dependencies
         env:
           NODE_AUTH_TOKEN: ${{ secrets.REGISTRY_TOKEN }}
-        run: npm ci --ignore-scripts
+        run: npm ci --ignore-scripts --no-fund
 
         # This step is separated from npm install for security reasons - here we can execute scripts
       - name: Post-install node dependencies
