@@ -111,6 +111,10 @@ $.summernote = $.extend($.summernote, {
       ],
     },
 
+    // link options
+    linkAddNoReferrer: false,
+    addLinkNoOpener: false,
+
     // air mode: inline editor
     airMode: false,
     overrideContextMenu: false, // TBD
@@ -122,7 +126,7 @@ $.summernote = $.extend($.summernote, {
     defaultProtocol: 'http://',
 
     focus: false,
-    tabDisabled: false,
+    tabDisable: false,
     tabSize: 4,
     styleWithCSS: false,
     shortcuts: true,

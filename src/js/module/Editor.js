@@ -192,10 +192,13 @@ export default class Editor {
      * @param {Object} linkInfo
      */
     this.createLink = this.wrapCommand((linkInfo) => {
+      let rel = [];
       let linkUrl = linkInfo.url;
       const linkText = linkInfo.text;
       const isNewWindow = linkInfo.isNewWindow;
       const checkProtocol = linkInfo.checkProtocol;
+      const addNoReferrer = this.options.linkAddNoReferrer;
+      const addNoOpener = this.options.linkAddNoOpener;
       let rng = linkInfo.range || this.getLastRange();
       const additionalTextLength = linkText.length - rng.toString().length;
       if (additionalTextLength > 0 && this.isLimited(additionalTextLength)) {
@@ -233,6 +236,15 @@ export default class Editor {
         $(anchor).attr('href', linkUrl);
         if (isNewWindow) {
           $(anchor).attr('target', '_blank');
+          if (addNoReferrer) {
+            rel.push('noreferrer');
+          }
+          if (addNoOpener) {
+            rel.push('noopener');
+          }
+          if (rel.length) {
+            $(anchor).attr('rel', rel.join(' '));
+          }
         } else {
           $(anchor).removeAttr('target');
         }
@@ -455,6 +467,9 @@ export default class Editor {
         return true;
       }
     } else if (key.isEdit(event.keyCode)) {
+      if (key.isRemove(event.keyCode)) {
+        this.context.invoke('removed');
+      }
       this.afterCommand();
     }
     return false;
@@ -710,7 +725,25 @@ export default class Editor {
       this.afterCommand();
     };
   }
+  /**
+   * removed (function added by 1der1)
+  */
+  removed(rng, node, tagName) { // LB
+		rng = range.create();
+		if (rng.isCollapsed() && rng.isOnCell()) {
+			node = rng.ec;
+			if( (tagName = node.tagName) &&
+				(node.childElementCount === 1) &&
+				(node.childNodes[0].tagName === "BR") ){
 
+				if(tagName === "P") {
+					node.remove();
+				} else if(['TH', 'TD'].indexOf(tagName) >=0) {
+					node.firstChild.remove();
+				}
+			}
+		}
+	}
   /**
    * insert image
    *
@@ -836,9 +869,7 @@ export default class Editor {
           this.$editable.data(KEY_BOGUS, firstSpan);
         }
       } else {
-        this.setLastRange(
-          this.createRangeFromList(spans).select()
-        );
+        rng.select();
       }
     } else {
       const noteStatusOutput = $.now();
