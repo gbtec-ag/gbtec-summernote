@@ -52,7 +52,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: 'npm'
+          cache-dependency-path: ./package-lock.json
           registry-url: ${{ secrets.REGISTRY_FETCH_URL }}
 
         # Run install without scripts, because they could access NODE_AUTH_TOKEN
@@ -78,7 +79,8 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: npm
+          cache: 'npm'
+          cache-dependency-path: ./package-lock.json
           registry-url: ${{ secrets.REGISTRY_PUBLISH_URL }}
 
       - name: Get package info
