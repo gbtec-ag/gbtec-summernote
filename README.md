@@ -90,3 +90,5 @@ https://github.com/summernote/summernote/blob/develop/.github/CONTRIBUTING.md
 
 ### License
 Summernote may be freely distributed under the MIT license.
+
+Test Change
