@@ -1,6 +1,5 @@
 import $ from 'jquery';
 import lists from '../core/lists';
-import func from '../core/func';
 
 const AIRMODE_POPOVER_X_OFFSET = -5;
 const AIRMODE_POPOVER_Y_OFFSET = 5;
@@ -17,30 +16,22 @@ export default class AirPopover {
     this.pageY = null;
 
     this.events = {
-      'summernote.contextmenu': (event) => {
+      'summernote.contextmenu': (e) => {
         if (this.options.editing) {
-          event.preventDefault();
-          event.stopPropagation();
+          e.preventDefault();
+          e.stopPropagation();
           this.onContextmenu = true;
           this.update(true);
         }
       },
-      'summernote.mousedown': (we, event) => {
-        this.pageX = event.pageX;
-        this.pageY = event.pageY;
+      'summernote.mousedown': (we, e) => {
+        this.pageX = e.pageX;
+        this.pageY = e.pageY;
       },
-      'summernote.keyup summernote.mouseup summernote.scroll': (we, event) => {
+      'summernote.keyup summernote.mouseup summernote.scroll': (we, e) => {
         if (this.options.editing && !this.onContextmenu) {
-          if (event.type == 'keyup') {
-            let range = this.context.invoke('editor.getLastRange');
-            let wordRange = range.getWordRange();
-            const bnd = func.rect2bnd(lists.last(wordRange.getClientRects()));
-            this.pageX = bnd.left;
-            this.pageY = bnd.top;
-          } else {
-            this.pageX = event.pageX;
-            this.pageY = event.pageY;
-          }
+          this.pageX = e.pageX;
+          this.pageY = e.pageY;
           this.update();
         }
         this.onContextmenu = false;
@@ -105,7 +96,7 @@ export default class AirPopover {
     this.ui.toggleBtnActive(this.$popover.find('.btn-codeview'), isCodeview);
     if (isCodeview) {
       this.hide();
-    }
+    } 
   }
 
   hide() {

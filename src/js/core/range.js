@@ -542,10 +542,9 @@ class WrappedRange {
    * insert node at current cursor
    *
    * @param {Node} node
-   * @param {Boolean} doNotInsertPara - default is false, removes added <p> that's added if true
    * @return {Node}
    */
-  insertNode(node, doNotInsertPara = false) {
+  insertNode(node) {
     let rng = this;
 
     if (dom.isText(node) || dom.isInline(node)) {
@@ -555,7 +554,7 @@ class WrappedRange {
     const info = dom.splitPoint(rng.getStartPoint(), dom.isInline(node));
     if (info.rightNode) {
       info.rightNode.parentNode.insertBefore(node, info.rightNode);
-      if (dom.isEmpty(info.rightNode) && (doNotInsertPara || dom.isPara(node))) {
+      if (dom.isEmpty(info.rightNode) && dom.isPara(node)) {
         info.rightNode.parentNode.removeChild(info.rightNode);
       }
     } else {
@@ -584,7 +583,7 @@ class WrappedRange {
     }
 
     childNodes = childNodes.map(function(childNode) {
-      return rng.insertNode(childNode, !dom.isInline(childNode));
+      return rng.insertNode(childNode);
     });
 
     if (reversed) {

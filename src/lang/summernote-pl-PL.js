@@ -19,8 +19,8 @@
         resizeFull: 'Zmień rozmiar na 100%',
         resizeHalf: 'Zmień rozmiar na 50%',
         resizeQuarter: 'Zmień rozmiar na 25%',
-        floatLeft: 'Do lewej',
-        floatRight: 'Do prawej',
+        floatLeft: 'Po lewej',
+        floatRight: 'Po prawej',
         floatNone: 'Równo z tekstem',
         shapeRounded: 'Kształt: zaokrąglone',
         shapeCircle: 'Kształt: okrąg',
@@ -66,7 +66,7 @@
       },
       style: {
         style: 'Styl',
-        p: 'Paragraf',
+        p: 'pny',
         blockquote: 'Cytat',
         pre: 'Kod',
         h1: 'Nagłówek 1',
@@ -140,7 +140,7 @@
         'formatH5': 'Zamień format bloku na H5',
         'formatH6': 'Zamień format bloku na H6',
         'insertHorizontalRule': 'Wstaw poziomą linię',
-        'linkDialog.show': 'Pokaż okno linkowania',
+        'linkDialog.show': 'Pokaż dialog linkowania',
       },
       history: {
         undo: 'Cofnij',

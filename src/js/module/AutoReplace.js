@@ -11,13 +11,13 @@ export default class AutoReplace {
     this.previousKeydownCode = null;
 
     this.events = {
-      'summernote.keyup': (we, event) => {
-        if (!event.isDefaultPrevented()) {
-          this.handleKeyup(event);
+      'summernote.keyup': (we, e) => {
+        if (!e.isDefaultPrevented()) {
+          this.handleKeyup(e);
         }
       },
-      'summernote.keydown': (we, event) => {
-        this.handleKeydown(event);
+      'summernote.keydown': (we, e) => {
+        this.handleKeydown(e);
       },
     };
   }
@@ -61,23 +61,23 @@ export default class AutoReplace {
     });
   }
 
-  handleKeydown(event) {
+  handleKeydown(e) {
     // this forces it to remember the last whole word, even if multiple termination keys are pressed
     // before the previous key is let go.
     if (this.previousKeydownCode && lists.contains(this.keys, this.previousKeydownCode)) {
-      this.previousKeydownCode = event.keyCode;
+      this.previousKeydownCode = e.keyCode;
       return;
     }
 
-    if (lists.contains(this.keys, event.keyCode)) {
+    if (lists.contains(this.keys, e.keyCode)) {
       const wordRange = this.context.invoke('editor.createRange').getWordRange();
       this.lastWord = wordRange;
     }
-    this.previousKeydownCode = event.keyCode;
+    this.previousKeydownCode = e.keyCode;
   }
 
-  handleKeyup(event) {
-    if (lists.contains(this.keys, event.keyCode)) {
+  handleKeyup(e) {
+    if (lists.contains(this.keys, e.keyCode)) {
       this.replace();
     }
   }

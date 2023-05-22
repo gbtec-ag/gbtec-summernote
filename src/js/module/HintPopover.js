@@ -19,13 +19,13 @@ export default class HintPopover {
     this.hints = Array.isArray(this.hint) ? this.hint : [this.hint];
 
     this.events = {
-      'summernote.keyup': (we, event) => {
-        if (!event.isDefaultPrevented()) {
-          this.handleKeyup(event);
+      'summernote.keyup': (we, e) => {
+        if (!e.isDefaultPrevented()) {
+          this.handleKeyup(e);
         }
       },
-      'summernote.keydown': (we, event) => {
-        this.handleKeydown(event);
+      'summernote.keydown': (we, e) => {
+        this.handleKeydown(e);
       },
       'summernote.disable summernote.dialog.shown summernote.blur': () => {
         this.hide();
@@ -48,13 +48,13 @@ export default class HintPopover {
 
     this.$popover.hide();
     this.$content = this.$popover.find('.popover-content,.note-popover-content');
-    this.$content.on('click', '.note-hint-item', (event) => {
+    this.$content.on('click', '.note-hint-item', (e) => {
       this.$content.find('.active').removeClass('active');
-      $(event.currentTarget).addClass('active');
+      $(e.currentTarget).addClass('active');
       this.replace();
     });
 
-    this.$popover.on('mousedown', (event) => { event.preventDefault(); });
+    this.$popover.on('mousedown', (e) => { e.preventDefault(); });
   }
 
   destroy() {
@@ -162,19 +162,19 @@ export default class HintPopover {
     });
   }
 
-  handleKeydown(event) {
+  handleKeydown(e) {
     if (!this.$popover.is(':visible')) {
       return;
     }
 
-    if (event.keyCode === key.code.ENTER) {
-      event.preventDefault();
+    if (e.keyCode === key.code.ENTER) {
+      e.preventDefault();
       this.replace();
-    } else if (event.keyCode === key.code.UP) {
-      event.preventDefault();
+    } else if (e.keyCode === key.code.UP) {
+      e.preventDefault();
       this.moveUp();
-    } else if (event.keyCode === key.code.DOWN) {
-      event.preventDefault();
+    } else if (e.keyCode === key.code.DOWN) {
+      e.preventDefault();
       this.moveDown();
     }
   }
@@ -203,8 +203,8 @@ export default class HintPopover {
     return $group;
   }
 
-  handleKeyup(event) {
-    if (!lists.contains([key.code.ENTER, key.code.UP, key.code.DOWN], event.keyCode)) {
+  handleKeyup(e) {
+    if (!lists.contains([key.code.ENTER, key.code.UP, key.code.DOWN], e.keyCode)) {
       let range = this.context.invoke('editor.getLastRange');
       let wordRange, keyword;
       if (this.options.hintMode === 'words') {

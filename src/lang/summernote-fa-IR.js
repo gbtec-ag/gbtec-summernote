@@ -33,7 +33,7 @@
         maximumFileSizeError: 'Maximum file size exceeded.',
         url: 'آدرس تصویر',
         remove: 'حذف تصویر',
-        original: 'اصلی',
+        original: 'Original',
       },
       video: {
         video: 'ویدیو',
@@ -111,7 +111,7 @@
         action: 'عملیات',
         paragraphFormatting: 'فرمت پاراگراف',
         documentStyle: 'استیل سند',
-        extraKeys: 'کلیدهای اضافی',
+        extraKeys: 'Extra keys',
       },
       help: {
         'insertParagraph': 'افزودن پاراگراف',
